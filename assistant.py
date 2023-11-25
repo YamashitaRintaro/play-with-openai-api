@@ -1,5 +1,10 @@
 from openai import OpenAI
 import os
+import time
+import json
+
+def show_json(obj):
+    display(json.loads(obj.model_dump_json()))
 
 client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
 
@@ -25,6 +30,7 @@ assistant = client.beta.assistants.create(
 
 # Step 2: Create a Thread
 thread = client.beta.threads.create()
+show_json(assistant)
 
 # Step 3: Add a Message to a Thread
 message = client.beta.threads.messages.create(
@@ -45,6 +51,8 @@ run = client.beta.threads.runs.retrieve(
   thread_id=thread.id,
   run_id=run.id
 )
+
+print(run)
 
 # Step 6: Display the Assistant's Response
 messages = client.beta.threads.messages.list(
