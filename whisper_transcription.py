@@ -1,13 +1,14 @@
+import os
 import whisper
 from openai import OpenAI
 
-model = whisper.load_model("large")
-result = model.transcribe("", verbose=True, language="ja")
+model = whisper.load_model("medium")
+result = model.transcribe("video/Harvest&Forecast.mp4", verbose=True, language="ja")
 print(result["text"])
 
 client = OpenAI(
     # defaults to os.environ.get("OPENAI_API_KEY")
-    api_key="",
+    api_key = os.environ.get("OPENAI_API_KEY"),
 )
 
 chat_completion = client.chat.completions.create(
@@ -18,4 +19,4 @@ chat_completion = client.chat.completions.create(
     model="gpt-4-1106-preview",
 )
 
-print(chat_completion['choices'][0]['message']['content'])
+print(chat_completion.choices[0].message.content)
