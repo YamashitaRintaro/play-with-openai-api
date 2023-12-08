@@ -1,13 +1,31 @@
 import whisper
 from openai import OpenAI
+import ffmpeg
+import os
 
+# 入力と出力のパスを設定
+input_video_path = "video/Harvest&Forecast.mp4"
+output_audio_path = "video/Harvest&Forecast.mp3"
+
+# 入力ファイルの存在をチェック
+if not os.path.exists(input_video_path):
+    raise FileNotFoundError("指定された動画ファイルが見つかりません。")
+
+# ffmpegを使用して音声を抽出
+stream = ffmpeg.input(input_video_path)
+stream = ffmpeg.output(stream, output_audio_path)
+ffmpeg.run(stream)
+
+# Whisperモデルで音声をテキストに変換
 model = whisper.load_model("medium")
-result = model.transcribe("video/Harvest&Forecast.mp4", verbose=True, language="ja")
+result = model.transcribe(output_audio_path, verbose=True, language="ja")
 
-client = OpenAI(
-    # defaults to os.environ.get("OPENAI_API_KEY")
-    api_key="Your API Key",
-)
+# OpenAI APIキーの存在をチェック
+api_key = os.environ.get("OPENAI_API_KEY")
+if api_key is None:
+    raise EnvironmentError("OPENAI_API_KEYが環境変数に設定されていません。")
+
+client = OpenAI(api_key=api_key)
 
 # 動画を要約
 video_summary = client.chat.completions.create(
