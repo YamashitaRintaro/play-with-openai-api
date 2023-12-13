@@ -6,7 +6,7 @@ from datetime import datetime
 
 # 入力と出力のパスを設定
 input_video_path = "video/Harvest&Forecast.mp4"
-# output_audio_path = "video/Harvest&Forecast.mp3"
+output_audio_path = "video/Harvest&Forecast.mp3"
 
 # 入力ファイルの存在をチェック
 if not os.path.exists(input_video_path):
