@@ -11,7 +11,7 @@ client = OpenAI(api_key=api_key)
 
 file = client.files.create(
     file=open(
-        "Transcript File",
+        "transcript.txt",
         "rb",
     ),
     purpose="assistants",
@@ -25,31 +25,35 @@ assistant = client.beta.assistants.create(
   file_ids=[file.id]
 )
 
+# 会話の状態を保持
 thread = client.beta.threads.create()
 
+# 新しいメッセージをスレッドに追加
 message = client.beta.threads.messages.create(
     thread_id=thread.id,
     role="user",
-    content="会議目的は何ですか？"
+    content=input() 
 )
 
+# アシスタントに対してスレッド内のメッセージを確認し、行動を取るよう指示
 run = client.beta.threads.runs.create(
     thread_id=thread.id,
     assistant_id=assistant.id,
 )
 
-while True:
-    run = client.beta.threads.runs.retrieve(
-        thread_id=thread.id,
-        run_id=run.id
-    )
-    print(run.status)
-    if run.status == "completed":
-        break
-    time.sleep(1)
+def wait_on_run(run, thread):
+    while run.status == "queued" or run.status == "in_progress":
+        run = client.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id,
+        )
+        time.sleep(0.5)
+    return run
+
+run = wait_on_run(run, thread)
 
 messages = client.beta.threads.messages.list(
-  thread_id=thread.id
+  thread_id=thread.id, order="asc", after=message.id
 )
 
 for message in messages:
