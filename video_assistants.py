@@ -11,7 +11,7 @@ client = OpenAI(api_key=api_key)
 
 file = client.files.create(
     file=open(
-        "transcript.txt",
+        "transcript/video_summary_20231213_160047.txt",
         "rb",
     ),
     purpose="assistants",
@@ -25,21 +25,25 @@ assistant = client.beta.assistants.create(
   file_ids=[file.id]
 )
 
-# 会話の状態を保持
-thread = client.beta.threads.create()
+def submit_message(assistant_id, thread, user_message):
+    # 新しいメッセージをスレッドに追加
+    client.beta.threads.messages.create(
+        thread_id=thread.id, role="user", content=user_message
+    )
+    
+    # アシスタントに対してスレッド内のメッセージを確認し、行動を取るよう指示
+    return client.beta.threads.runs.create(
+        thread_id=thread.id,
+        assistant_id=assistant_id,
+    )
 
-# 新しいメッセージをスレッドに追加
-message = client.beta.threads.messages.create(
-    thread_id=thread.id,
-    role="user",
-    content=input() 
-)
-
-# アシスタントに対してスレッド内のメッセージを確認し、行動を取るよう指示
-run = client.beta.threads.runs.create(
-    thread_id=thread.id,
-    assistant_id=assistant.id,
-)
+def get_response(thread):
+    return client.beta.threads.messages.list(thread_id=thread.id, order="asc")
+  
+def create_thread_and_run(user_input):
+    thread = client.beta.threads.create()
+    run = submit_message(assistant.id, thread, user_input)
+    return thread, run
 
 def wait_on_run(run, thread):
     while run.status == "queued" or run.status == "in_progress":
@@ -50,11 +54,6 @@ def wait_on_run(run, thread):
         time.sleep(0.5)
     return run
 
-run = wait_on_run(run, thread)
-
-messages = client.beta.threads.messages.list(
-  thread_id=thread.id, order="asc", after=message.id
-)
-
-for message in messages:
-    print(message.content)
+thread1, run1 = create_thread_and_run("フォローアップアクションを教えて")
+run1 = wait_on_run(run1, thread1)
+print(get_response(thread1))
